@@ -3,8 +3,8 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-@TeleOp(group = "TeleOp", name = "TestDriving")
-public class TestDrive extends LinearOpMode
+@TeleOp(group = "TeleOp", name = "TeleOp")
+public class OfficialTele extends LinearOpMode
 {
 
     private SwerveDrive swerveDrive;
@@ -51,19 +51,10 @@ public class TestDrive extends LinearOpMode
             }
 
             swerveDrive.setPower(power);
-            swerveDrive.setStrafe(strafeAngle);
-            swerveDrive.setTurn(turnAngle);
+            swerveDrive.setTargets(strafeAngle, turnAngle);
+            swerveDrive.updateSwerve();
         }
 
     }
-
-    private Runnable swerving = new Runnable()
-    {
-        @Override
-        public void run()
-        {
-            swerveDrive.runSwerve();
-        }
-    };
 
 }
