@@ -13,6 +13,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 public class Gyro
 {
 
+    //We need a good deal of objects in this class
     private BNO055IMU gyro;
     private double cumulativeAngle;
     private Orientation lastAngles;
@@ -20,60 +21,63 @@ public class Gyro
     private Thread getAngles;
     private Telemetry telemetry;
 
+    //constructor
     public Gyro(HardwareMap hardwareMap, Telemetry telemetry, LinearOpMode op)
     {
+        //setting some object states
         this.op = op;
         cumulativeAngle = 0;
         this.telemetry = telemetry;
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
-        parameters.mode                = BNO055IMU.SensorMode.IMU;
-        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.loggingEnabled      = false;
+        parameters.mode = BNO055IMU.SensorMode.IMU;
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.loggingEnabled = false;
 
-        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
-        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
-        // and named "gyro".
+        //IMU should be named "gyro" as an AdaFruit IMU attached to an I2C port
         gyro = hardwareMap.get(BNO055IMU.class, "gyro");
 
-        gyro.initialize(parameters);
+        gyro.initialize(parameters); //Initialize gyro
 
-        telemetry.addData("Gyro Calibrating... don't move", null);
+        telemetry.addData("Gyro Calibrating... don't move", null); //telemetry stuff
         telemetry.update();
 
-        // make sure the imu gyro is calibrated before continuing.
+        //wait for the gyro to finish calibrating before starting anything
         while (!gyro.isGyroCalibrated()) {}
         lastAngles = gyro.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
         telemetry.clear();
-        telemetry.addData("Gyro Calibrated.", null);
+        telemetry.addData("Gyro Calibrated.", null); //yay
         telemetry.update();
     }
 
-    //The gyro can glitch if you don't constantly read.
-
+    //Because of the way the gyro works (returns value between -180 and 180, if you go to -181 it goes to 179), it can be critical to read constantly.  If we don't, it could glitch and go to value 361 instead of 1.  To assure that doesn't happen, we read constantly off a thread
     public void startGyro()
     {
         getAngles = new Thread(calculateAngles);
         getAngles.start();
     }
 
+    //To stop the gyro, we simply need to interrupt the thread
     public void stopGyro()
     {
         getAngles.interrupt();
     }
 
+    //If for any reason we want to reset the angle of the gyro
     public void resetAngle()
     {
         cumulativeAngle = 0;
     }
 
+    //Getting the angle from the gyro.  This method could be renamed to updateAngleValue, because that is really what it does
     public void getAngle()
     {
         Orientation angles = gyro.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         double degree = angles.firstAngle - lastAngles.firstAngle;
 
+        //adding or subracting 360 depending on whether we went to -181 or not.  The reason we need to read constantly
         if(degree < -180)
         {
             degree+=360;
@@ -82,21 +86,23 @@ public class Gyro
         {
             degree -= 360;
         }
-        cumulativeAngle += degree;
+        cumulativeAngle += degree; //this is the key angle, it is the absolute angle of the gyro in relation to its starting position.  If the gyro has done 2 full rotations, this will be 720 instead of 0.
 
-        lastAngles = angles;
+        lastAngles = angles; //Now lastAngles are the angles we just used
     }
 
+    //getter
     public double getCumulativeAngle()
     {
         return cumulativeAngle;
     }
 
+    //Runnable for the thread
     private Runnable calculateAngles = new Runnable()
     {
       public void run()
       {
-          while(op.opModeIsActive() && !Thread.currentThread().isInterrupted())
+          while(op.opModeIsActive() && !Thread.currentThread().isInterrupted()) //Reason thread kills when its interrupted
           {
               getAngle();
               telemetry.clear();
