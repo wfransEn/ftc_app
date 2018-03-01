@@ -20,6 +20,11 @@ public class Gyro
     private LinearOpMode op;
     private Thread getAngles;
     private Telemetry telemetry;
+    private double lastError;
+    private double lastTime;
+    private double P;
+    private double I;
+    private double D;
 
     //constructor
     public Gyro(HardwareMap hardwareMap, Telemetry telemetry, LinearOpMode op)
@@ -27,6 +32,11 @@ public class Gyro
         //setting some object states
         this.op = op;
         cumulativeAngle = 0;
+        lastError = 0;
+        lastTime = System.nanoTime();
+        P = 0;
+        I = 0;
+        D = 0;
         this.telemetry = telemetry;
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
@@ -71,7 +81,8 @@ public class Gyro
         cumulativeAngle = 0;
     }
 
-    //Getting the angle from the gyro.  This method could be renamed to updateAngleValue, because that is really what it does
+    //Getting the angle from the gyro
+    //This method could be renamed to updateAngleValue, because that is really what it does
     public void getAngle()
     {
         Orientation angles = gyro.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
@@ -95,6 +106,41 @@ public class Gyro
     public double getCumulativeAngle()
     {
         return cumulativeAngle;
+    }
+
+    //Here's the PID.  Its a lot simpler than I thought it would be, but tuning seems like it'll be a dingbat
+    public void calculatePID(double target, double Kp, double Ki, double Kd)
+    {
+        double error = target - cumulativeAngle;
+        double time = System.nanoTime();
+
+        P = Kp * error; //P = the error basically, there's pre algebra for you
+        I += Ki * (error * (time - lastTime)); //I = the integral of the last interval + all of the integrals prior
+        D = Kd * ((error - lastError) / (time - lastTime)); //D is just slope formula... more pre algebra I guess
+
+        lastError = error;
+        lastTime = time;
+    }
+
+    //Some getters and setters
+    public double getP()
+    {
+        return P;
+    }
+
+    public double getI()
+    {
+        return I;
+    }
+
+    public double getD()
+    {
+        return D;
+    }
+
+    public void resetPID()
+    {
+        I = 0;
     }
 
     //Runnable for the thread

@@ -192,12 +192,10 @@ public class Motion
     }
 
     //Method used to turn, it uses a combination of the gyro, basic algebra, and the encoder power PID
-    public void turn(double target, double speed)
+    public void turn(double target, double maxSpeed)
     {
         //set variables that are required
-        double start = gyro.getCumulativeAngle();
-        double error = target + start - gyro.getCumulativeAngle();
-        double maxSpeed = 0;
+        target += gyro.getCumulativeAngle();
 
         //setting the targets of the motor angle things so that they will be facing opposite directions, then set their power so
         //they move to the correct position (thanks built in PIDs)
@@ -218,49 +216,22 @@ public class Motion
         bla.setPower(0);
 
         //Main while loop, does this until it reaches the target
-        double lastSpeed = 0; //lastSpeed for gradual acceleration
-        while(error != target)
+        while(gyro.getCumulativeAngle() != target)
         {
-            boolean notDecelerating = false;
-            maxSpeed = error / 30; //Division ensures gradual and linear deceleration
-            if(maxSpeed > speed) //max speed
-            {
-                maxSpeed = speed;
-                notDecelerating = true;
-            }
-            else if(maxSpeed < -speed) //max speed
-            {
-                maxSpeed = -speed;
-                notDecelerating = true;
-            }
-            else if(maxSpeed < 0.2 && maxSpeed >= 0) //minimum speed
-            {
-                maxSpeed = .2;
-            }
-            else if(maxSpeed > -.2 && maxSpeed <= 0) //minimum speed
-            {
-                maxSpeed = -.2;
-            }
+            gyro.calculatePID(target, 0.01, 0.01, 0.01);
 
-            //gradual acceleration if we are not decelerating
-            if(lastSpeed < speed && notDecelerating)
-            {
-                maxSpeed = lastSpeed + 0.05;
-            }
-
-            //setting the power of the motors.  The power is the same since they face opposite directions
-            fra.setPower(maxSpeed);
-            fla.setPower(maxSpeed);
-            bra.setPower(maxSpeed);
-            bla.setPower(maxSpeed);
-
-            error = target + start - gyro.getCumulativeAngle(); //Recalculating error
+            fra.setPower(gyro.getP() + gyro.getI() + gyro.getD());
+            fla.setPower(gyro.getP() + gyro.getI() + gyro.getD());
+            bra.setPower(gyro.getP() + gyro.getI() + gyro.getD());
+            bla.setPower(gyro.getP() + gyro.getI() + gyro.getD());
         }
         //Braking the motors so we don't spin forever
         fra.setPower(0);
         fla.setPower(0);
         bra.setPower(0);
         bla.setPower(0);
+
+        gyro.resetPID(); //Resetti the spaghetti
     }
 
 }
