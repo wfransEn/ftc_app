@@ -218,12 +218,12 @@ public class Motion
         //Main while loop, does this until it reaches the target
         while(gyro.getCumulativeAngle() != target)
         {
-            gyro.calculatePID(target, 0.01, 0.01, 0.01);
+            double power = gyro.getPID(target, 0.01, 0, 0.01);
 
-            fra.setPower(gyro.getP() + gyro.getI() + gyro.getD());
-            fla.setPower(gyro.getP() + gyro.getI() + gyro.getD());
-            bra.setPower(gyro.getP() + gyro.getI() + gyro.getD());
-            bla.setPower(gyro.getP() + gyro.getI() + gyro.getD());
+            fra.setPower(power);
+            fla.setPower(power);
+            bra.setPower(power);
+            bla.setPower(power);
         }
         //Braking the motors so we don't spin forever
         fra.setPower(0);
@@ -231,7 +231,7 @@ public class Motion
         bra.setPower(0);
         bla.setPower(0);
 
-        gyro.resetPID(); //Resetti the spaghetti
+        gyro.resetI(); //Resetti the spaghetti
     }
 
 }

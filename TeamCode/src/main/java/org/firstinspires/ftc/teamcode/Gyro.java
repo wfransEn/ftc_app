@@ -109,7 +109,7 @@ public class Gyro
     }
 
     //Here's the PID.  Its a lot simpler than I thought it would be, but tuning seems like it'll be a dingbat
-    public void calculatePID(double target, double Kp, double Ki, double Kd)
+    public double getPID(double target, double Kp, double Ki, double Kd)
     {
         double error = target - cumulativeAngle;
         double time = System.nanoTime();
@@ -120,25 +120,13 @@ public class Gyro
 
         lastError = error;
         lastTime = time;
+
+        return P + I + D;
     }
 
     //Some getters and setters
-    public double getP()
-    {
-        return P;
-    }
 
-    public double getI()
-    {
-        return I;
-    }
-
-    public double getD()
-    {
-        return D;
-    }
-
-    public void resetPID()
+    public void resetI()
     {
         I = 0;
     }
